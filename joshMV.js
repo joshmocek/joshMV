@@ -1,7 +1,7 @@
 (function(global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 		typeof define === 'function' && define.amd ? define(['exports'], factory) :
-		(factory((global.R = {})));
+		(factory((global.J = {})));
 }(this, (function(exports) {
 	'use strict';
 	const R = require('ramda');

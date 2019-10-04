@@ -60,7 +60,7 @@
 
 	/* Validates the variable passed in is a function and calls it */
 	/* ((Function, ...Params) -> Function(Params)) */
-	const safeFunctionCall = (func, ...params) => validateFunction(func)(params);
+	const safeFunctionCall = (func, ...params) => validateFunction(func)(...params);
 
 	/* Calls a function from the object and the path if valid */
 	/* First param is an Object */
@@ -72,7 +72,7 @@
 			if (path != null) {
 				// R.pipe(R.pathOr(null), (func) => (safeFunctionCall(func, params)))(path, obj);
 				let myFunc = R.pathOr(null, path, obj);
-				if (myFunc != null && R.type(myFunc) == 'Function') return safeFunctionCall(myFunc, params);
+				if (myFunc != null && R.type(myFunc) == 'Function') return safeFunctionCall(myFunc, ...params);
 			}
 		}
 		// throw new Error('JoshMV Error -- Bad path to function or obj.path != function');

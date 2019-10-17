@@ -48,6 +48,8 @@
 		}
 	};
 
+	/* Takes fn and if type is not a function returns an identity function */
+	/* ((Function) -> Function) */
 	const validateArray = validateType('Array');
 	const validateBoolean = validateType('Boolean');
 	const validateFunction = validateType('Function');
@@ -60,28 +62,50 @@
 
 	/* Validates the variable passed in is a function and calls it */
 	/* ((Function, ...Params) -> Function(Params)) */
-	const safeFunctionCall = (func, ...params) => validateFunction(func)(...params);
+	const safeFunctionCall = (func) => (...params) => validateFunction(func)(...params);
 
 	/* Calls a function from the object and the path if valid */
 	/* First param is an Object */
 	/* Second param is an Array or a String of the path of the Object */
 	/* ((Object, (Array or String), ...Params) -> Function(Params)) */
-	const safeFunctionCallFromObj = (obj, path, ...params) => {
+	const safeFunctionCallFromObj = (obj) => (path) => (...params) => {
 		if (obj) {
 			path = (R.type(path) == 'String') ? [path] : (R.type(path) == 'Array') ? path : null;
 			if (path != null) {
 				// R.pipe(R.pathOr(null), (func) => (safeFunctionCall(func, params)))(path, obj);
 				let myFunc = R.pathOr(null, path, obj);
-				if (myFunc != null && R.type(myFunc) == 'Function') return safeFunctionCall(myFunc, ...params);
+				if (myFunc != null && R.type(myFunc) == 'Function') return safeFunctionCall(myFunc)(...params);
 			}
 		}
-		// throw new Error('JoshMV Error -- Bad path to function or obj.path != function');
+		console.error('JoshMV Error -- Bad path to function or obj.path != function: ' + JSON.stringify(path));
 		return null;
+	};
+
+	/* First param is an Array or a String of the path on the Object */
+	/* Second param is the Object */
+	/* Third param is the parameters passed to the function */
+	/* f(Array or String)(Object)(...Params) -> Function(Params)) */
+	const safePathFuncOnObj = (path) => {
+		let _path = (R.type(path) == 'String') ? [path] : (R.type(path) == 'Array') ? path : null;
+		if (_path == null) {
+			console.error('JoshMV Error -- Bad path : ' + JSON.stringify(path));
+			return (x) => (y) => null;
+		}
+		return (obj) => {
+			if (obj) {
+				let myFunc = R.pathOr(null, _path, obj);
+				if (myFunc != null && R.type(myFunc) == 'Function') return safeFunctionCall(myFunc);
+				console.error('JoshMV Error -- Bad Function : ' + JSON.stringify(path));
+			}
+			if (!obj) console.error('JoshMV Error -- Bad Obj : ' + JSON.stringify(obj));
+			return (...uselessParams) => null;
+		};
 	};
 
 	exports.parseStatusCode = parseStatusCode;
 	exports.safeFunctionCall = safeFunctionCall;
 	exports.safeFunctionCallFromObj = safeFunctionCallFromObj;
+	exports.safePathFuncOnObj = safePathFuncOnObj;
 	exports.stripEndQuotes = stripEndQuotes;
 	exports.validateArray = validateArray;
 	exports.validateBoolean = validateBoolean;

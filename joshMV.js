@@ -60,15 +60,40 @@
 	const validateString = validateType('String');
 	const validateUndefined = validateType('Undefined');
 
-	/* Validates the variable passed in is a function and calls it */
-	/* ((Function, ...Params) -> Function(Params)) */
+	/*
+	 * Returns the supplied function's return by applying
+	 * the supplied parameters to the passed function.
+	 * Note that if the supplied function is != 'Function'
+	 * then the supplied function defaults to (x) => x;
+	 *
+	 * Validates the variable passed in is a function and calls it
+	 * ((Function)(...Params) -> Function(Params))
+	 *
+	 * @func
+	 * @memberOf J
+	 * @since v0.1.0
+	 * @category Function
+	 * @sig (func) => (...params) => func(...params)
+	 * @param {Function} func
+	 * @param {...*} params to pass to the function
+	 * @return {*} returns func(...*)
+	 * @see J.safePathFuncOnObj, J.safeFunctionCallFromObj
+	 * @example
+	 *
+	 *			let add2 = (x, y) => x + y;
+	 *      J.safeFunctionCall(add2)(1, 2); //=> 3
+	 *
+	 *			let safeAdd2 = J.safeFunctionCall(add2);
+	 *			safeAdd2(3, 2): //=> 5
+	 */
+
 	const safeFunctionCall = (func) => (...params) => validateFunction(func)(...params);
 
 	/* Calls a function from the object and the path if valid */
 	/* First param is an Object */
 	/* Second param is an Array or a String of the path of the Object */
-	/* ((Object, (Array or String), ...Params) -> Function(Params)) */
-	const safeFunctionCallFromObj = (obj) => (path) => (...params) => {
+	/* ((Array or String) => (Object) => (...Params) -> Function(...Params)) */
+	const safeFunctionCallFromObj = (path) => (obj) => (...params) => {
 		if (obj) {
 			path = (R.type(path) == 'String') ? [path] : (R.type(path) == 'Array') ? path : null;
 			if (path != null) {
@@ -81,15 +106,47 @@
 		return null;
 	};
 
-	/* First param is an Array or a String of the path on the Object */
-	/* Second param is the Object */
-	/* Third param is the parameters passed to the function */
-	/* f(Array or String)(Object)(...Params) -> Function(Params)) */
+	/*
+	 * Returns the function at the object's path function return by applying
+	 * the supplied parameters to the passed function.
+	 * Note that if the supplied object's path is != 'Function'
+	 * then the supplied function defaults to (x) => x;
+	 *
+	 * Validates that the object path is a valid function and returns
+	 * the functions return. Any of the parameters are invalid it returns null.
+	 * (Array or String) => (Object) => (...Params) -> Object[path](Params)
+	 *
+	 * @func
+	 * @memberOf J
+	 * @since v0.1.0
+	 * @category Function
+	 * @sig (path) => (obj) => (...params) => obj[path](...params)
+	 * @param {Array|String} path to traverse
+	 * @param {Object} obj An object that has a function at the path supplied
+	 * @param {...*} params to pass to the function
+	 * @return {*} returns obj[path](...*)
+	 * @see J.safeFunctionCall, J.safeFunctionCallFromObj
+	 * @example
+	 *			const simpleObj = {
+	 *				"add2": (x, y) => x + y
+	 *			};
+	 *      J.safePathFuncOnObj('add2')(simpleObj)(5, 4); //=> 9
+	 *
+	 *			let safeAdd2FromObj = J.safePathFuncOnObj('add2');
+	 *			safeAdd2FromObj(simpleObj)(5, 3): //=> 8
+	 *
+	 *			J.safePathFuncOnObj('add3')(simpleObj)(1, 2); //=> null
+	 *			// JoshMV Error -- Bad Function : 'add3'
+	 *
+	 *			J.safePathFuncOnObj('add2')(null)(2, 3); //=> null
+	 *			// JoshMV Error -- Bad Obj : 'null'
+	 */
+
 	const safePathFuncOnObj = (path) => {
 		let _path = (R.type(path) == 'String') ? [path] : (R.type(path) == 'Array') ? path : null;
 		if (_path == null) {
 			console.error('JoshMV Error -- Bad path : ' + JSON.stringify(path));
-			return (x) => (y) => null;
+			return (x) => (...y) => null;
 		}
 		return (obj) => {
 			if (obj) {
